@@ -1,0 +1,6 @@
+{
+  "name": "editor",
+  "devDependencies": {
+    "prettier": "2.3.1"
+  }
+}
