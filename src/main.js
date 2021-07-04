@@ -2,8 +2,10 @@ import * as THREE from "/lib/three.js";
 
 import { Sky } from "/lib/objects.js";
 import { OrbitControls } from "/lib/controls.js";
+import { RoomEnvironment } from "/lib/environments.js";
 
-const scene = new THREE.Scene();
+const clock = new THREE.Clock();
+const scene = new RoomEnvironment();
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -35,12 +37,6 @@ document.body.appendChild(renderer.domElement);
 // Controls
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-cube.position.y = 1;
-scene.add(cube);
-
 // Ground
 const groundGeometry = new THREE.PlaneGeometry(10000, 10000, 10, 10);
 groundGeometry.rotateX(THREE.MathUtils.degToRad(-90));
@@ -49,17 +45,14 @@ const plane = new THREE.Mesh(
   groundGeometry,
   new THREE.MeshBasicMaterial({ color: 0xeeeeee })
 );
-scene.add(plane);
+// scene.add(plane);
 
 // Debug
 scene.add(new THREE.AxesHelper(5));
 
 const animate = function () {
   requestAnimationFrame(animate);
-  orbitControls.update();
-
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
+  orbitControls.update(clock.getDelta());
 
   renderer.render(scene, camera);
 };
