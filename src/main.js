@@ -1,7 +1,7 @@
 import * as THREE from "/lib/three.js";
 
 import { Sky } from "/lib/objects.js";
-import { OrbitControls } from "/lib/controls.js";
+import MainControls from "./MainControls.js";
 import { RoomEnvironment } from "/lib/environments.js";
 
 const clock = new THREE.Clock();
@@ -35,7 +35,7 @@ renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
 
 // Controls
-const orbitControls = new OrbitControls(camera, renderer.domElement);
+const controls = new MainControls(camera, renderer.domElement);
 
 // Ground
 const groundGeometry = new THREE.PlaneGeometry(10000, 10000, 10, 10);
@@ -52,8 +52,8 @@ scene.add(new THREE.AxesHelper(5));
 
 const animate = function () {
   requestAnimationFrame(animate);
-  orbitControls.update(clock.getDelta());
 
+  controls.update(clock.getDelta());
   renderer.render(scene, camera);
 };
 
