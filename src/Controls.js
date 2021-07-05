@@ -2,9 +2,10 @@ import * as THREE from "/lib/three.js";
 import State from "./State.js";
 
 export default class extends State {
-  constructor(domElement) {
+  constructor(app) {
     super();
-    this.domElement = domElement;
+    const domElement = (this.domElement = app.renderer.domElement);
+    this.dispatcher = app.dispatcher;
 
     domElement.addEventListener("click", this._onClick.bind(this));
     domElement.addEventListener("contextmenu", this._onClick.bind(this));

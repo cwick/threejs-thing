@@ -2,9 +2,9 @@ import * as THREE from "/lib/three.js";
 import Controls from "./Controls.js";
 
 export default class extends Controls {
-  constructor(camera, domElement) {
-    super(domElement);
-    this.camera = camera;
+  constructor(app) {
+    super(app);
+    this.camera = app.camera;
     this.camera.lookAt(0, 0, 5);
     this.camera.rotation.reorder("YXZ");
 

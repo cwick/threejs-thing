@@ -5,17 +5,21 @@ import { RoomEnvironment } from "/lib/environments.js";
 import StateManager from "./StateManager.js";
 import WalkControls from "./WalkControls.js";
 import InteractControls from "./InteractControls.js";
+import AppEvents from "./AppEvents.js";
+import EventDispatcher from "./EventDispatcher.js";
+import App from "./App.js";
 
-const clock = new THREE.Clock();
-const scene = new RoomEnvironment();
-const camera = new THREE.PerspectiveCamera(
+const app = new App();
+app.clock = new THREE.Clock();
+app.scene = new RoomEnvironment();
+app.camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
-  0.1,
-  1000
+  0.5,
+  100
 );
-camera.position.y = 5;
-camera.position.x = 10;
+app.camera.position.y = 5;
+app.camera.position.x = 10;
 
 // Sky
 const sky = new Sky();
@@ -23,7 +27,7 @@ sky.scale.setScalar(450000);
 sky.material.uniforms["sunPosition"].value.copy(
   new THREE.Vector3(0.1, 0.02, 0.1)
 );
-scene.add(sky);
+app.scene.add(sky);
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({
@@ -35,11 +39,15 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
+app.renderer = renderer;
+
+// Events
+const appEvents = new AppEvents(app);
 
 // Controls
 const controlStateManager = new StateManager();
-const walkControls = new WalkControls(camera, renderer.domElement);
-const interactControls = new InteractControls(camera, renderer.domElement);
+const walkControls = new WalkControls(app);
+const interactControls = new InteractControls(app);
 controlStateManager.registerState("walk", walkControls);
 controlStateManager.registerState("interact", interactControls);
 controlStateManager.transitionTo("interact");
@@ -54,13 +62,13 @@ const plane = new THREE.Mesh(
 );
 
 // Debug
-scene.add(new THREE.AxesHelper(5));
+app.scene.add(new THREE.AxesHelper(5));
 
 const animate = function () {
   requestAnimationFrame(animate);
 
-  controlStateManager.update(clock.getDelta());
-  renderer.render(scene, camera);
+  controlStateManager.update(app.clock.getDelta());
+  renderer.render(app.scene, app.camera);
 };
 
 animate();
