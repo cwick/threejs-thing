@@ -1,30 +1,21 @@
 import * as THREE from "/lib/three.js";
+import Controls from "./Controls.js";
 
-export default class {
+export default class extends Controls {
   constructor(camera, domElement) {
+    super(domElement);
     this.camera = camera;
-    this.domElement = domElement;
     this.camera.lookAt(0, 0, 5);
     this.camera.rotation.reorder("YXZ");
 
-    domElement.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-    });
-    domElement.addEventListener("keydown", this.onKeyDown.bind(this));
-    domElement.addEventListener("keyup", this.onKeyUp.bind(this));
-    domElement.addEventListener("mousemove", this.onMouseMove.bind(this));
-    domElement.focus();
-
-    domElement.addEventListener("click", this.onClick.bind(this));
-
-    domElement.ownerDocument.addEventListener("pointerlockchange", (e) => {
-      // Do something here?
-    });
-
     this.mouseMovement = new THREE.Vector2();
     this.moveSpeed = 10;
-    this.lookSensitivity = 0.001;
+    this.lookSensitivity = 0.002;
     this.invertLook = true;
+  }
+
+  enter() {
+    this.requestPointerLock();
   }
 
   onKeyDown(e) {
@@ -56,54 +47,65 @@ export default class {
         break;
     }
 
-    if (handled) {
-      e.preventDefault();
-    }
+    return handled;
   }
 
   onKeyUp(e) {
+    let handled = false;
     switch (e.code) {
       case "KeyW":
         this.moveForward = false;
+        handled = true;
         break;
       case "KeyS":
         this.moveBackward = false;
+        handled = true;
         break;
       case "KeyA":
         this.moveLeft = false;
+        handled = true;
         break;
       case "KeyD":
         this.moveRight = false;
+        handled = true;
         break;
       case "KeyE":
         this.moveUp = false;
+        handled = true;
         break;
       case "KeyQ":
         this.moveDown = false;
+        handled = true;
         break;
     }
+
+    return handled;
   }
 
   onMouseMove(e) {
     this.mouseMovement.x += e.movementX;
     this.mouseMovement.y += e.movementY;
-    this.#handleRotation();
+    this.handleRotation();
   }
 
   onClick(e) {
-    if (document.pointerLockElement) {
-      document.exitPointerLock();
-    } else {
-      this.domElement.requestPointerLock();
-    }
+    this.switchToInteractMode();
+  }
+
+  onPointerUnlocked() {
+    this.transitionTo("interact");
   }
 
   update(delta) {
-    this.#handleMovement(delta);
-    this.#handleRotation();
+    this.handleMovement(delta);
+    this.handleRotation();
   }
 
-  #handleMovement(delta) {
+  switchToInteractMode() {
+    document.exitPointerLock();
+  }
+
+  handleMovement(delta) {
     const moveDirection = new THREE.Vector3(0, 0, 0);
 
     if (this.moveForward) {
@@ -131,7 +133,7 @@ export default class {
     this.camera.position.addScaledVector(moveDirection, this.moveSpeed * delta);
   }
 
-  #handleRotation() {
+  handleRotation() {
     if (document.pointerLockElement) {
       this.camera.rotation.y -= this.mouseMovement.x * this.lookSensitivity;
       this.camera.rotation.x -=

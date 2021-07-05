@@ -1,8 +1,10 @@
 import * as THREE from "/lib/three.js";
 
 import { Sky } from "/lib/objects.js";
-import MainControls from "./MainControls.js";
 import { RoomEnvironment } from "/lib/environments.js";
+import StateManager from "./StateManager.js";
+import WalkControls from "./WalkControls.js";
+import InteractControls from "./InteractControls.js";
 
 const clock = new THREE.Clock();
 const scene = new RoomEnvironment();
@@ -35,7 +37,12 @@ renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
 
 // Controls
-const controls = new MainControls(camera, renderer.domElement);
+const controlStateManager = new StateManager();
+const walkControls = new WalkControls(camera, renderer.domElement);
+const interactControls = new InteractControls(camera, renderer.domElement);
+controlStateManager.registerState("walk", walkControls);
+controlStateManager.registerState("interact", interactControls);
+controlStateManager.transitionTo("interact");
 
 // Ground
 const groundGeometry = new THREE.PlaneGeometry(10000, 10000, 10, 10);
@@ -45,7 +52,6 @@ const plane = new THREE.Mesh(
   groundGeometry,
   new THREE.MeshBasicMaterial({ color: 0xeeeeee })
 );
-// scene.add(plane);
 
 // Debug
 scene.add(new THREE.AxesHelper(5));
@@ -53,7 +59,7 @@ scene.add(new THREE.AxesHelper(5));
 const animate = function () {
   requestAnimationFrame(animate);
 
-  controls.update(clock.getDelta());
+  controlStateManager.update(clock.getDelta());
   renderer.render(scene, camera);
 };
 
