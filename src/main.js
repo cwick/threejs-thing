@@ -40,15 +40,6 @@ renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
 app.renderer = renderer;
 
-// Controls
-app.controlStack = new ControlStack(renderer.domElement);
-const walkControls = new WalkControls(app);
-const interactControls = new InteractControls(app);
-app.controlStack.registerControl("walk", walkControls);
-app.controlStack.registerControl("interact", interactControls);
-app.controlStack.push("walk");
-app.controlStack.push("interact");
-
 // Ground
 const groundGeometry = new THREE.PlaneGeometry(10000, 10000, 10, 10);
 groundGeometry.rotateX(THREE.MathUtils.degToRad(-90));
@@ -61,21 +52,37 @@ const plane = new THREE.Mesh(
 // Debug
 app.scene.add(new THREE.AxesHelper(5));
 
+// Render target
 const renderTarget = new THREE.WebGLRenderTarget(
   renderer.domElement.width,
   renderer.domElement.height,
   {
     encoding: THREE.LinearEncoding,
+    // Important to avoid banding issues due to lack
+    // of precision.
     type: THREE.FloatType,
   }
 );
+app.renderer = renderer;
 renderTarget.depthTexture = new THREE.DepthTexture();
 renderTarget.depthTexture.type = THREE.UnsignedIntType;
 
+// Post processing
 const effectComposer = new EffectComposer(renderer, renderTarget);
+const depthReadPass = new DepthReadPass({ visualize: false });
 effectComposer.addPass(new RenderPass(app.scene, app.camera));
-effectComposer.addPass(new DepthReadPass());
+effectComposer.addPass(depthReadPass);
 effectComposer.addPass(new ShaderPass(GammaCorrectionShader));
+app.depthReader = depthReadPass;
+
+// Controls
+app.controlStack = new ControlStack(renderer.domElement);
+const walkControls = new WalkControls(app);
+const interactControls = new InteractControls(app);
+app.controlStack.registerControl("walk", walkControls);
+app.controlStack.registerControl("interact", interactControls);
+app.controlStack.push("walk");
+app.controlStack.push("interact");
 
 const animate = function () {
   requestAnimationFrame(animate);

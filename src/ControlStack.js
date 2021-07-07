@@ -1,12 +1,16 @@
 class Actions {
   constructor(actions) {
-    this.actions = new Set(actions.values());
+    this.actions = Object.assign({}, actions);
   }
 
   consume(code) {
-    const result = this.actions.has(code);
-    this.actions.delete(code);
+    const result = this.actions[code];
+    delete this.actions[code];
     return result;
+  }
+
+  peek(code) {
+    return this.actions[code];
   }
 }
 
@@ -40,7 +44,7 @@ export default class {
 
   controls = [];
   controlRegistry = {};
-  actions = new Set();
+  actions = {};
   mouseMovement = { x: 0, y: 0 };
 
   registerControl(name, control) {
@@ -67,10 +71,10 @@ export default class {
     this.controls.forEach((c) => c.update?.(delta));
 
     this.mouseMovement.x = this.mouseMovement.y = 0;
-    this.actions.delete("LeftClick");
-    this.actions.delete("RightClick");
-    this.actions.delete("PointerLocked");
-    this.actions.delete("PointerUnlocked");
+    delete this.actions["LeftClick"];
+    delete this.actions["RightClick"];
+    delete this.actions["PointerLocked"];
+    delete this.actions["PointerUnlocked"];
 
     for (let i = 0; i < this._numberToPop; i++) {
       this.controls.shift();
@@ -87,11 +91,11 @@ export default class {
   }
 
   _onKeyDown(e) {
-    this.actions.add(e.code);
+    this.actions[e.code] = true;
   }
 
   _onKeyUp(e) {
-    this.actions.delete(e.code);
+    delete this.actions[e.code];
   }
 
   _onMouseMove(e) {
@@ -100,10 +104,11 @@ export default class {
   }
 
   _onClick(e) {
+    const point = { x: e.offsetX, y: e.offsetY };
     if (e.button === 0) {
-      this.actions.add("LeftClick");
+      this.actions["LeftClick"] = point;
     } else if (e.button === 2) {
-      this.actions.add("RightClick");
+      this.actions["RightClick"] = point;
     }
   }
 
@@ -114,9 +119,9 @@ export default class {
 
   _onPointerLockChange(e) {
     if (document.pointerLockElement === this.domElement) {
-      this.actions.add("PointerLocked");
+      this.actions["PointerLocked"] = true;
     } else if (!document.pointerLockElement) {
-      this.actions.add("PointerUnlocked");
+      this.actions["PointerUnlocked"] = true;
     }
   }
 }
