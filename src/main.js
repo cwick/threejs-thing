@@ -1,13 +1,15 @@
 import * as THREE from "/lib/three.js";
-
 import { Sky } from "/lib/objects.js";
 import { RoomEnvironment } from "/lib/environments.js";
+import { EffectComposer, RenderPass, ShaderPass } from "/lib/postprocessing.js";
+import { GammaCorrectionShader } from "/lib/shaders.js";
+
 import StateManager from "./StateManager.js";
 import WalkControls from "./WalkControls.js";
 import InteractControls from "./InteractControls.js";
 import AppEvents from "./AppEvents.js";
-import EventDispatcher from "./EventDispatcher.js";
 import App from "./App.js";
+import DepthReadPass from "./DepthReadPass.js";
 
 const app = new App();
 app.clock = new THREE.Clock();
@@ -35,7 +37,6 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
-renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
@@ -64,11 +65,27 @@ const plane = new THREE.Mesh(
 // Debug
 app.scene.add(new THREE.AxesHelper(5));
 
+const renderTarget = new THREE.WebGLRenderTarget(
+  renderer.domElement.width,
+  renderer.domElement.height,
+  {
+    encoding: THREE.LinearEncoding,
+    type: THREE.FloatType,
+  }
+);
+renderTarget.depthTexture = new THREE.DepthTexture();
+renderTarget.depthTexture.type = THREE.UnsignedIntType;
+
+const effectComposer = new EffectComposer(renderer, renderTarget);
+effectComposer.addPass(new RenderPass(app.scene, app.camera));
+effectComposer.addPass(new DepthReadPass());
+effectComposer.addPass(new ShaderPass(GammaCorrectionShader));
+
 const animate = function () {
   requestAnimationFrame(animate);
 
   controlStateManager.update(app.clock.getDelta());
-  renderer.render(app.scene, app.camera);
+  effectComposer.render();
 };
 
 animate();

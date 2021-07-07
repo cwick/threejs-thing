@@ -1,4 +1,3 @@
-import * as THREE from "/lib/three.js";
 import State from "./State.js";
 
 export default class extends State {
