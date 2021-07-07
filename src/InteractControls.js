@@ -1,21 +1,23 @@
-import Controls from "./Controls.js";
-import WalkControls from "./WalkControls.js";
-
-export default class extends WalkControls {
-  enter() {}
-
-  onClick(e) {
-    if (e.button === 0) {
-      this.dispatcher.dispatchEvent("pickPoint", {
-        x: e.offsetX,
-        y: e.offsetY,
-      });
-    } else if (e.button === 2) {
-      this.transitionTo("walk");
-    }
+export default class {
+  constructor({ controlStack }) {
+    this.controlStack = controlStack;
   }
 
-  onMouseMove(e) {}
+  onMouseMove(movement) {
+    movement.consume();
+  }
 
-  onPointerUnlocked() {}
+  onAction(actions) {
+    if (actions.consume("RightClick")) {
+      this.controlStack.requestPointerLock();
+    }
+
+    if (actions.consume("PointerLocked")) {
+      this.controlStack.pop();
+    }
+
+    if (actions.consume("LeftClick")) {
+      console.log("Pick");
+    }
+  }
 }

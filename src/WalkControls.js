@@ -1,12 +1,12 @@
 import * as THREE from "/lib/three.js";
-import Controls from "./Controls.js";
 
-export default class extends Controls {
-  constructor(app) {
-    super(app);
-    this.camera = app.camera;
+export default class {
+  constructor({ camera, controlStack }) {
+    this.camera = camera;
     this.camera.lookAt(0, 0, 5);
     this.camera.rotation.reorder("YXZ");
+
+    this.controlStack = controlStack;
 
     this.mouseMovement = new THREE.Vector2();
     this.moveSpeed = 10;
@@ -14,78 +14,26 @@ export default class extends Controls {
     this.invertLook = true;
   }
 
-  enter() {
-    this.requestPointerLock();
-  }
+  onAction(actions) {
+    this.moveForward = actions.consume("KeyW");
+    this.moveBackward = actions.consume("KeyS");
+    this.moveLeft = actions.consume("KeyA");
+    this.moveRight = actions.consume("KeyD");
+    this.moveUp = actions.consume("KeyE");
+    this.moveDown = actions.consume("KeyQ");
 
-  onKeyDown(e) {
-    let handled = false;
-    switch (e.code) {
-      case "KeyW":
-        this.moveForward = true;
-        handled = true;
-        break;
-      case "KeyS":
-        this.moveBackward = true;
-        handled = true;
-        break;
-      case "KeyA":
-        this.moveLeft = true;
-        handled = true;
-        break;
-      case "KeyD":
-        this.moveRight = true;
-        handled = true;
-        break;
-      case "KeyE":
-        this.moveUp = true;
-        handled = true;
-        break;
-      case "KeyQ":
-        this.moveDown = true;
-        handled = true;
-        break;
+    if (actions.consume("LeftClick")) {
+      this.controlStack.exitPointerLock();
     }
-
-    return handled;
-  }
-
-  onKeyUp(e) {
-    let handled = false;
-    switch (e.code) {
-      case "KeyW":
-        this.moveForward = false;
-        handled = true;
-        break;
-      case "KeyS":
-        this.moveBackward = false;
-        handled = true;
-        break;
-      case "KeyA":
-        this.moveLeft = false;
-        handled = true;
-        break;
-      case "KeyD":
-        this.moveRight = false;
-        handled = true;
-        break;
-      case "KeyE":
-        this.moveUp = false;
-        handled = true;
-        break;
-      case "KeyQ":
-        this.moveDown = false;
-        handled = true;
-        break;
+    if (actions.consume("PointerUnlocked")) {
+      this.controlStack.push("interact");
     }
-
-    return handled;
   }
 
-  onMouseMove(e) {
-    this.mouseMovement.x += e.movementX;
-    this.mouseMovement.y += e.movementY;
-    this.handleRotation();
+  onMouseMove(movement) {
+    const { x, y } = movement.consume();
+    this.mouseMovement.x = x;
+    this.mouseMovement.y = y;
   }
 
   onClick(e) {
@@ -134,20 +82,14 @@ export default class extends Controls {
   }
 
   handleRotation() {
-    if (document.pointerLockElement) {
-      this.camera.rotation.y -= this.mouseMovement.x * this.lookSensitivity;
-      this.camera.rotation.x -=
-        this.mouseMovement.y *
-        this.lookSensitivity *
-        (this.invertLook ? -1 : 1);
+    this.camera.rotation.y -= this.mouseMovement.x * this.lookSensitivity;
+    this.camera.rotation.x -=
+      this.mouseMovement.y * this.lookSensitivity * (this.invertLook ? -1 : 1);
 
-      this.camera.rotation.x = THREE.MathUtils.clamp(
-        this.camera.rotation.x,
-        -Math.PI / 2,
-        Math.PI / 2
-      );
-    }
-
-    this.mouseMovement.x = this.mouseMovement.y = 0;
+    this.camera.rotation.x = THREE.MathUtils.clamp(
+      this.camera.rotation.x,
+      -Math.PI / 2,
+      Math.PI / 2
+    );
   }
 }

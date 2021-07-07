@@ -4,14 +4,12 @@ import { RoomEnvironment } from "/lib/environments.js";
 import { EffectComposer, RenderPass, ShaderPass } from "/lib/postprocessing.js";
 import { GammaCorrectionShader } from "/lib/shaders.js";
 
-import StateManager from "./StateManager.js";
+import ControlStack from "./ControlStack.js";
 import WalkControls from "./WalkControls.js";
 import InteractControls from "./InteractControls.js";
-import AppEvents from "./AppEvents.js";
-import App from "./App.js";
 import DepthReadPass from "./DepthReadPass.js";
 
-const app = new App();
+const app = {};
 app.clock = new THREE.Clock();
 app.scene = new RoomEnvironment();
 app.camera = new THREE.PerspectiveCamera(
@@ -42,16 +40,14 @@ renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
 app.renderer = renderer;
 
-// Events
-const appEvents = new AppEvents(app);
-
 // Controls
-const controlStateManager = new StateManager();
+app.controlStack = new ControlStack(renderer.domElement);
 const walkControls = new WalkControls(app);
 const interactControls = new InteractControls(app);
-controlStateManager.registerState("walk", walkControls);
-controlStateManager.registerState("interact", interactControls);
-controlStateManager.transitionTo("interact");
+app.controlStack.registerControl("walk", walkControls);
+app.controlStack.registerControl("interact", interactControls);
+app.controlStack.push("walk");
+app.controlStack.push("interact");
 
 // Ground
 const groundGeometry = new THREE.PlaneGeometry(10000, 10000, 10, 10);
@@ -84,7 +80,7 @@ effectComposer.addPass(new ShaderPass(GammaCorrectionShader));
 const animate = function () {
   requestAnimationFrame(animate);
 
-  controlStateManager.update(app.clock.getDelta());
+  app.controlStack.update(app.clock.getDelta());
   effectComposer.render();
 };
 
