@@ -32,23 +32,40 @@ export default class extends Pass {
     super();
     this.passThrough = new ShaderPass(CopyShader);
     this.packDepth = new ShaderPass(PackDepthShader);
+    this.depthTarget = new THREE.WebGLRenderTarget();
+    this.depthTarget.texture.generateMipmaps = false;
+    this.depthTarget.depthBuffer = false;
   }
 
   render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
     if (readBuffer.depthTexture) {
       const size = new THREE.Vector2();
       renderer.getSize(size);
-      const depthTarget = new THREE.WebGLRenderTarget(size.x, size.y);
-      depthTarget.texture.generateMipmaps = false;
-      depthTarget.depthBuffer = false;
+      this.depthTarget.setSize(size.x, size.y);
 
+      // Pack depth to RGBA
       this.packDepth.material.uniforms.tDepth.value = readBuffer.depthTexture;
-      this.packDepth.render(renderer, depthTarget, null);
+      this.packDepth.render(renderer, this.depthTarget, null);
 
+      // Pass through
       this.passThrough.renderToScreen = this.renderToScreen;
-      this.passThrough.render(renderer, writeBuffer, depthTarget);
+      this.passThrough.render(renderer, writeBuffer, readBuffer);
 
-      depthTarget.dispose();
+      // Visualize depth buffer
+      const oldViewport = writeBuffer.viewport;
+      const oldAutoclear = renderer.autoClear;
+      renderer.autoClear = false;
+
+      writeBuffer.viewport = new THREE.Vector4(
+        0,
+        0,
+        400,
+        (size.y / size.x) * 400
+      );
+      this.passThrough.render(renderer, writeBuffer, this.depthTarget);
+
+      writeBuffer.viewport = oldViewport;
+      renderer.autoClear = oldAutoclear;
     } else if (this.renderToScreen) {
       this.passThrough.renderToScreen = true;
       this.passThrough.render(...arguments);
