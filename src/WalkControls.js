@@ -1,12 +1,9 @@
 import * as THREE from "/lib/three.js";
 
 export default class {
-  constructor({ camera, controlStack }) {
-    this.camera = camera;
-    this.camera.lookAt(0, 0, 5);
-    this.camera.rotation.reorder("YXZ");
-
-    this.controlStack = controlStack;
+  constructor(editor) {
+    this.editor = editor;
+    this.camera = editor.camera;
 
     this.mouseMovement = new THREE.Vector2();
     this.moveSpeed = 10;
@@ -23,10 +20,10 @@ export default class {
     this.moveDown = actions.consume("KeyQ");
 
     if (actions.consume("LeftClick")) {
-      this.controlStack.exitPointerLock();
+      this.editor.controls.exitPointerLock();
     }
     if (actions.consume("PointerUnlocked")) {
-      this.controlStack.push("interact");
+      this.editor.controls.stack.push("interact");
     }
   }
 
@@ -76,20 +73,13 @@ export default class {
     }
 
     moveDirection.normalize();
-    moveDirection.applyEuler(new THREE.Euler(0, this.camera.rotation.y, 0));
-
+    moveDirection.applyEuler(new THREE.Euler(0, this.camera.yaw, 0));
     this.camera.position.addScaledVector(moveDirection, this.moveSpeed * delta);
   }
 
   handleRotation() {
-    this.camera.rotation.y -= this.mouseMovement.x * this.lookSensitivity;
-    this.camera.rotation.x -=
+    this.camera.yaw -= this.mouseMovement.x * this.lookSensitivity;
+    this.camera.pitch -=
       this.mouseMovement.y * this.lookSensitivity * (this.invertLook ? -1 : 1);
-
-    this.camera.rotation.x = THREE.MathUtils.clamp(
-      this.camera.rotation.x,
-      -Math.PI / 2,
-      Math.PI / 2
-    );
   }
 }
