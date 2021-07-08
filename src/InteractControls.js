@@ -35,7 +35,7 @@ export default class {
       const { x, y } = actions.consume("LeftClick");
       const depth = this.depthReader.readDepth(x, y);
       const size = this.renderer.getSize(new THREE.Vector2());
-      const ndcX = (x / (size.x - 1)) * 2 - 1;
+      const ndcX = (x / size.x) * 2 - 1;
       const ndcY = ((size.y - y - 1) / size.y) * 2 - 1;
       const ndcDepth = depth * 2 - 1;
       console.log("Pick", ndcX, ndcY, ndcDepth);

@@ -69,7 +69,7 @@ renderTarget.depthTexture.type = THREE.UnsignedIntType;
 
 // Post processing
 const effectComposer = new EffectComposer(renderer, renderTarget);
-const depthReadPass = new DepthReadPass({ visualize: false });
+const depthReadPass = new DepthReadPass();
 effectComposer.addPass(new RenderPass(app.scene, app.camera));
 effectComposer.addPass(depthReadPass);
 effectComposer.addPass(new ShaderPass(GammaCorrectionShader));

@@ -37,9 +37,8 @@ const PackDepthShader = {
 };
 
 export default class extends Pass {
-  constructor({ visualize }) {
+  constructor() {
     super();
-    this.visualize = visualize;
     this.passThrough = new ShaderPass(CopyShader);
     this.packDepth = new ShaderPass(PackDepthShader);
     this.depthTarget = new THREE.WebGLRenderTarget();
@@ -48,12 +47,12 @@ export default class extends Pass {
   }
 
   readDepth(x, y) {
+    const coordinates = this.convertToGLWindowCoordinates(x, y);
     const pixelBuffer = new Uint8Array(4);
-    const pixelRatio = this.renderer.getPixelRatio();
     this.renderer.readRenderTargetPixels(
       this.depthTarget,
-      x * pixelRatio,
-      this.depthTarget.height - y * pixelRatio - 1,
+      coordinates.x,
+      coordinates.y,
       1,
       1,
       pixelBuffer
@@ -74,33 +73,9 @@ export default class extends Pass {
       // Pack depth to RGBA
       this.packDepth.material.uniforms.tDepth.value = readBuffer.depthTexture;
       this.packDepth.render(renderer, this.depthTarget, null);
+    }
 
-      // Visualize depth buffer
-      if (this.visualize) {
-        this.needsSwap = true;
-        // Render original scene
-        this.passThrough.renderToScreen = this.renderToScreen;
-        this.passThrough.render(renderer, writeBuffer, readBuffer);
-
-        // Visualize depth buffer in small window
-        const oldViewport = writeBuffer.viewport;
-        const oldAutoclear = renderer.autoClear;
-        renderer.autoClear = false;
-
-        writeBuffer.viewport = new THREE.Vector4(
-          0,
-          0,
-          400,
-          (size.y / size.x) * 400
-        );
-        this.passThrough.render(renderer, writeBuffer, this.depthTarget);
-        writeBuffer.viewport = oldViewport;
-        renderer.autoClear = oldAutoclear;
-      } else if (this.renderToScreen) {
-        this.passThrough.renderToScreen = true;
-        this.passThrough.render(...arguments);
-      }
-    } else if (this.renderToScreen) {
+    if (this.renderToScreen) {
       this.passThrough.renderToScreen = true;
       this.passThrough.render(...arguments);
     }
@@ -111,5 +86,13 @@ export default class extends Pass {
       .fromArray(buffer)
       .multiplyScalar(1 / 255)
       .dot(UnpackFactors);
+  }
+
+  convertToGLWindowCoordinates(x, y) {
+    const pixelRatio = this.renderer.getPixelRatio();
+    return {
+      x: x * pixelRatio,
+      y: this.depthTarget.height - y * pixelRatio - 1,
+    };
   }
 }
