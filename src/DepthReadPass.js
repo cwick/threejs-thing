@@ -2,13 +2,12 @@ import { Pass, ShaderPass } from "/lib/postprocessing.js";
 import { CopyShader } from "/lib/shaders.js";
 import * as THREE from "/lib/three.js";
 
-const UnpackDownscale = 255 / 256; // 0..1 -> fraction (excluding 1)
 const PackFactors = new THREE.Vector3(256 * 256 * 256, 256 * 256, 256);
 const UnpackFactors = new THREE.Vector4(
-  UnpackDownscale / PackFactors.x,
-  UnpackDownscale / PackFactors.y,
-  UnpackDownscale / PackFactors.z,
-  UnpackDownscale / 1
+  1 / PackFactors.x,
+  1 / PackFactors.y,
+  1 / PackFactors.z,
+  1
 );
 
 const PackDepthShader = {
