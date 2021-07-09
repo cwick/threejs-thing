@@ -9,12 +9,13 @@ export default class {
   }
 
   onAction(actions) {
-    if (actions.consume("RightClick")) {
-      this.editor.controls.requestPointerLock();
-    }
-
     if (actions.consume("PointerLocked")) {
       this.editor.controls.stack.pop();
+      return;
+    }
+
+    if (actions.consume("RightClick")) {
+      this.editor.controls.requestPointerLock();
     }
 
     if (actions.peek("LeftClick")) {
@@ -25,6 +26,15 @@ export default class {
         worldPosition.y,
         worldPosition.z
       );
+    }
+
+    if (actions.peek("LeftMouseDown")) {
+      const mousePosition = actions.consume("LeftMouseDown");
+      const orbitPoint = this.editor.camera.unproject(
+        mousePosition.x,
+        mousePosition.y
+      );
+      this.editor.controls.stack.push("orbit", { orbitPoint });
     }
   }
 }

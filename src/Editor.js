@@ -8,6 +8,7 @@ import ControlStack from "./ControlStack.js";
 import DepthReadPass from "./DepthReadPass.js";
 import InteractControls from "./InteractControls.js";
 import WalkControls from "./WalkControls.js";
+import OrbitControls from "./OrbitControls.js";
 
 class Camera {
   constructor(editor) {
@@ -37,12 +38,6 @@ class Camera {
     const ndcDepth = depth * 2 - 1;
     return new THREE.Vector3(ndcX, ndcY, ndcDepth).unproject(this.#camera);
   }
-
-  changeHeadingBy(radians) {}
-
-  changePitchBy(radians) {}
-
-  changePositionBy(x, y) {}
 
   get yaw() {
     return this.#camera.rotation.y;
@@ -78,6 +73,21 @@ class Camera {
       x: 0,
       y: 0,
     };
+  }
+
+  orbitAroundPoint(worldPoint, radians) {
+    // const cameraWorldPosition = this.#camera.getWorldPosition(
+    //   new THREE.Vector3()
+    // );
+    // console.log(cameraWorldPosition);
+    this.#camera.position.sub(worldPoint);
+    this.#camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), radians);
+    this.yaw += radians;
+    this.#camera.position.add(worldPoint);
+    // console.log(cameraWorldPosition);
+    // this.#camera.worldToLocal(cameraWorldPosition);
+    // console.log(cameraWorldPosition);
+    // this.#camera.position.copy();
   }
 
   _getCamera() {
@@ -212,8 +222,10 @@ class Controls {
     this.#controlStack = new ControlStack(editor.canvas);
     const walkControls = new WalkControls(editor);
     const interactControls = new InteractControls(editor);
+    const orbitControls = new OrbitControls(editor);
     this.#controlStack.registerControl("walk", walkControls);
     this.#controlStack.registerControl("interact", interactControls);
+    this.#controlStack.registerControl("orbit", orbitControls);
     this.#controlStack.push("walk");
     this.#controlStack.push("interact");
   }
@@ -232,6 +244,13 @@ class Controls {
 
   get stack() {
     return this.#controlStack;
+  }
+
+  get preferences() {
+    return {
+      lookSensitivity: 0.002,
+      invertLook: true,
+    };
   }
 
   #controlStack;

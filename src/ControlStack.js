@@ -34,6 +34,8 @@ export default class {
     domElement.addEventListener("keydown", this._onKeyDown.bind(this));
     domElement.addEventListener("keyup", this._onKeyUp.bind(this));
     domElement.addEventListener("mousemove", this._onMouseMove.bind(this));
+    domElement.addEventListener("mousedown", this._onMouseDown.bind(this));
+    domElement.addEventListener("mouseup", this._onMouseUp.bind(this));
     domElement.ownerDocument.addEventListener(
       "pointerlockchange",
       this._onPointerLockChange.bind(this)
@@ -51,10 +53,11 @@ export default class {
     this.controlRegistry[name] = control;
   }
 
-  push(name) {
+  push(name, args) {
     const control = this.controlRegistry[name];
     if (control) {
       this.controls.unshift(control);
+      control.onPush?.(args);
     }
   }
 
@@ -63,15 +66,31 @@ export default class {
   }
 
   update(delta) {
+    this._dispatchEvents();
+    this._updateControls(delta);
+    this._postUpdate();
+  }
+
+  _dispatchEvents() {
     const actions = new Actions(this.actions);
     const mouseMovement = new MouseMovements(this.mouseMovement);
     this._numberToPop = 0;
+
     this.controls.forEach((c) => c.onAction?.(actions));
     this.controls.forEach((c) => c.onMouseMove?.(mouseMovement));
-    this.controls.forEach((c) => c.update?.(delta));
+  }
 
+  _updateControls(delta) {
+    this.controls.forEach((c) => c.update?.(delta));
+  }
+
+  _postUpdate() {
     this.mouseMovement.x = this.mouseMovement.y = 0;
     delete this.actions["LeftClick"];
+    delete this.actions["LeftMouseDown"];
+    delete this.actions["LeftMouseUp"];
+    delete this.actions["RightMouseDown"];
+    delete this.actions["RightMouseUp"];
     delete this.actions["RightClick"];
     delete this.actions["PointerLocked"];
     delete this.actions["PointerUnlocked"];
@@ -103,8 +122,26 @@ export default class {
     this.mouseMovement.y += e.movementY;
   }
 
+  _onMouseDown(e) {
+    const point = this._getMousePositionFromEvent(e);
+    if (e.button === 0) {
+      this.actions["LeftMouseDown"] = point;
+    } else if (e.button === 2) {
+      this.actions["RightMouseDown"] = point;
+    }
+  }
+
+  _onMouseUp(e) {
+    const point = this._getMousePositionFromEvent(e);
+    if (e.button === 0) {
+      this.actions["LeftMouseUp"] = point;
+    } else if (e.button === 2) {
+      this.actions["RightMouseUp"] = point;
+    }
+  }
+
   _onClick(e) {
-    const point = { x: e.offsetX, y: e.offsetY };
+    const point = this._getMousePositionFromEvent(e);
     if (e.button === 0) {
       this.actions["LeftClick"] = point;
     } else if (e.button === 2) {
@@ -123,5 +160,9 @@ export default class {
     } else if (!document.pointerLockElement) {
       this.actions["PointerUnlocked"] = true;
     }
+  }
+
+  _getMousePositionFromEvent(e) {
+    return { x: e.offsetX, y: e.offsetY };
   }
 }

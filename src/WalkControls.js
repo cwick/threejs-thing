@@ -7,8 +7,6 @@ export default class {
 
     this.mouseMovement = new THREE.Vector2();
     this.moveSpeed = 10;
-    this.lookSensitivity = 0.002;
-    this.invertLook = true;
   }
 
   onAction(actions) {
@@ -78,8 +76,11 @@ export default class {
   }
 
   handleRotation() {
-    this.camera.yaw -= this.mouseMovement.x * this.lookSensitivity;
+    const { preferences } = this.editor.controls;
+    this.camera.yaw -= this.mouseMovement.x * preferences.lookSensitivity;
     this.camera.pitch -=
-      this.mouseMovement.y * this.lookSensitivity * (this.invertLook ? -1 : 1);
+      this.mouseMovement.y *
+      preferences.lookSensitivity *
+      (preferences.invertLook ? -1 : 1);
   }
 }
